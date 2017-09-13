@@ -25,7 +25,7 @@ require_relative 'git_repo'
 describe 'Github pull request' do
   before(:all) do
     @config = EnvConfig.new %w(GITHUB_API_TOKEN GITHUB_USER GITHUB_REPO
-                               GITHUB_TARGET_BRANCH JENKINS_SERVER)
+                               GITHUB_TARGET_BRANCH)
   end
 
   it 'runs check and gate pipelines' do
@@ -34,8 +34,7 @@ describe 'Github pull request' do
     puts "Cloning the repository #{repo_fqn}"
     git_repo = GitRepo.new('github.com', '22', 'git', repo_fqn)
     test_branch = git_repo.create_test_branch(@config.target_branch)
-    filename = "test#{@config.server}.txt"
-    git_repo.create_test_commit(filename)
+    git_repo.create_test_commit
 
     # push and create a pull request
     puts 'Creating pull request'
