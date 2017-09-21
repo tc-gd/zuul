@@ -67,7 +67,7 @@ class Gerrit
     @port = port
   end
 
-  def wait_change_submitted(change_number, timeout = 30)
+  def wait_change_submitted(change_number, timeout = 300)
     poll_interval = 3
     loop do
       change = query_single_change(change_number)
