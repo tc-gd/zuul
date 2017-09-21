@@ -66,7 +66,7 @@ describe 'Github pull request' do
   end
 end
 
-def wait_pr_merged(github, repo, pull, timeout = 30)
+def wait_pr_merged(github, repo, pull, timeout = 300)
   poll_interval = 3
   loop do
     pull = github.pull_request(repo, pull.number)
