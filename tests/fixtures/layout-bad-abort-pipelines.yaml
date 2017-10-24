@@ -1,0 +1,17 @@
+# Can abort only pipelines with IndependentPipelineManager
+pipelines:
+  - name: dependent1
+    manager: DependentPipelineManager
+    trigger:
+      gerrit:
+        - event: patchset-created
+  - name: dependent2
+    manager: DependentPipelineManager
+    trigger:
+      gerrit:
+        - event: patchset-created
+    abort-pipelines:
+      - dependent1
+
+projects:
+  - name: foo

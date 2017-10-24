@@ -1,0 +1,41 @@
+# Can abort only pipelines with IndependentPipelineManager
+pipelines:
+  - name: check
+    manager: IndependentPipelineManager
+    trigger:
+      gerrit:
+        - event: patchset-created
+    success:
+      gerrit:
+        verified: 2
+    failure:
+      gerrit:
+        verified: -2
+  - name: gate
+    manager: DependentPipelineManager
+    trigger:
+      gerrit:
+        - event: comment-added
+          approval:
+            - approved: 1
+    abort-pipelines:
+      - check
+    success:
+      gerrit:
+        verified: 2
+    failure:
+      gerrit:
+        verified: -2
+
+jobs:
+  - name: project-check1
+  - name: project-check2
+  - name: project-gate
+
+projects:
+  - name: org/project
+    check:
+      - project-check1:
+        - project-check2
+    gate:
+      - project-gate

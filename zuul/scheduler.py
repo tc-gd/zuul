@@ -508,8 +508,19 @@ class Scheduler(threading.Thread):
                     manager.event_filters += trigger.getEventFilters(
                         conf_pipeline['trigger'][trigger_name])
 
-            pipeline.report_empty = conf_pipeline.get('report-empty',
-                                                      False)
+            pipeline.report_empty = conf_pipeline.get('report-empty', False)
+
+            pipeline.abort_pipelines = conf_pipeline.get('abort-pipelines', [])
+
+        # Check if abort-pipelines is valid after all pipelines are loaded
+        for name, pipeline in layout.pipelines.items():
+            for abort_name in pipeline.abort_pipelines:
+                if not isinstance(layout.pipelines[abort_name].manager,
+                                  IndependentPipelineManager):
+                    self.log.error("Error while loading abort-pipelines for "
+                                   "pipeline %s" % pipeline)
+                    raise Exception("Aborted pipeline has manager other"
+                                    "than IndependentPipelineManager")
 
         for project_template in data.get('project-templates', []):
             # Make sure the template only contains valid pipelines
@@ -1084,6 +1095,9 @@ class Scheduler(threading.Thread):
                 elif event.isChangeAbandoned():
                     pipeline.manager.removeAbandonedChange(change)
                 if pipeline.manager.eventMatches(event, change):
+                    # Remove items related to change from configured pipelines
+                    self._removeChangeFromPipelines(change,
+                                                    pipeline.abort_pipelines)
                     self.log.info("Adding %s, %s to %s" %
                                   (project, change, pipeline))
                     pipeline.manager.addChange(change)
@@ -1173,6 +1187,11 @@ class Scheduler(threading.Thread):
                              (build_set,))
             return
         pipeline.manager.onMergeCompleted(event)
+
+    def _removeChangeFromPipelines(self, change, pipelines):
+        for pipeline_name in pipelines:
+            pipeline = self.layout.pipelines.get(pipeline_name)
+            pipeline.manager.removeAllVersionsOfChange(change)
 
     def formatStatusJSON(self):
         if self.config.has_option('zuul', 'url_pattern'):
@@ -1399,6 +1418,13 @@ class BasePipelineManager(object):
             if not item.live:
                 continue
             if item.change.equals(change):
+                self.removeItem(item)
+
+    def removeAllVersionsOfChange(self, change):
+        self.log.debug("Removing versions of change %s in pipeline %s" %
+                       (change, self.pipeline.name))
+        for item in self.pipeline.getAllItems():
+            if item.change.number == change.number:
                 self.removeItem(item)
 
     def reEnqueueItem(self, item, last_head):

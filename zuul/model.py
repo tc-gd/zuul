@@ -98,6 +98,7 @@ class Pipeline(object):
         self.window_decrease_type = None
         self.window_decrease_factor = None
         self.report_empty = None
+        self.abort_pipelines = []
 
     def __repr__(self):
         return '<Pipeline %s>' % self.name

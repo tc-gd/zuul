@@ -4504,3 +4504,46 @@ For CI problems and help debugging, contact ci@example.org"""
         self.assertIn(
             '- docs-draft-test2 https://server/job/docs-draft-test2/1/',
             body[3])
+
+    def test_layout_abort_pipelines(self):
+        "Test if defining abort-pipelines for pipelines with "
+        "manager other than IndependentPipelineManager raises error"
+        self.config.set('zuul', 'layout_config',
+                        'tests/fixtures/layout-bad-abort-pipelines.yaml')
+        self.assertRaises(Exception, "Aborted pipeline has manager other"
+                                     "than IndependentPipelineManager",
+                          self.sched.reconfigure, self.config)
+
+    def test_abort_pipelines(self):
+        "Test if jobs in other pipelines related to the same change get"
+        "aborted as configured"
+        self.config.set('zuul', 'layout_config',
+                        'tests/fixtures/layout-abort-pipelines.yaml')
+        self.sched.reconfigure(self.config)
+        self.registerJobs()
+        self.worker.hold_jobs_in_build = True
+        check_pipeline = self.sched.layout.pipelines['check']
+        gate_pipeline = self.sched.layout.pipelines['gate']
+
+        A = self.fake_gerrit.addFakeChange('org/project', 'master', 'A')
+        self.fake_gerrit.addEvent(A.getPatchsetCreatedEvent(1))
+        self.waitUntilSettled()
+        self.assertEqual(len(check_pipeline.getAllItems()), 1)
+        self.assertEqual(len(gate_pipeline.getAllItems()), 0)
+
+        A.addApproval('CRVW', 2)
+        self.fake_gerrit.addEvent(A.addApproval('APRV', 1))
+        self.waitUntilSettled()
+        self.assertEqual(len(check_pipeline.getAllItems()), 0)
+        self.assertEqual(len(gate_pipeline.getAllItems()), 1)
+
+        self.worker.hold_jobs_in_build = False
+        self.worker.release()
+        self.waitUntilSettled()
+
+        self.assertEqual(len(self.history), 2)
+        self.assertEqual(self.history[0].name, 'project-check1')
+        self.assertEqual(self.history[0].result, 'ABORTED')
+        self.assertEqual(self.history[1].name, 'project-gate')
+
+        self.assertEqual(A.reported, 1)

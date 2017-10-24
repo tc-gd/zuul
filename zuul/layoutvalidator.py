@@ -77,6 +77,7 @@ class LayoutSchema(object):
                 'window-decrease-factor': window_factor,
                 'github-status-name': str,
                 'report-empty': bool,
+                'abort-pipelines': toList(str),
                 }
 
     project_template = {v.Required('name'): str}
