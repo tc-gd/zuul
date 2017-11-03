@@ -900,6 +900,8 @@ class Changeish(object):
         self.project = project
         self.connection_name = None
 
+        self.files = []
+
     def __str__(self):
         return str(self._id())
 
@@ -938,7 +940,6 @@ class Change(Changeish):
         self.patchset = None
         self.refspec = None
 
-        self.files = []
         self.needs_changes = []
         self.needed_by_changes = []
         self.is_current_patchset = True

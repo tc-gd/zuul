@@ -153,6 +153,28 @@ class TestGithub(ZuulTestCase):
 
         self.assertEqual(0, len(self.history))
 
+    def test_push_matched_file_event(self):
+        """Test file filtering for push event from github"""
+        old_sha = random_sha1()
+        new_sha = random_sha1()
+        self.fake_github.emitEvent(
+            self.fake_github.getPushEvent('org/post-file-project', 'master',
+                                          old_sha, new_sha, ['c-requires']))
+        self.waitUntilSettled()
+
+        self.assertEqual(1, len(self.history))
+
+    def test_push_unmatched_file_event(self):
+        """Test file filtering for push event from github"""
+        old_sha = random_sha1()
+        new_sha = random_sha1()
+        self.fake_github.emitEvent(
+            self.fake_github.getPushEvent('org/post-file-project', 'master',
+                                          old_sha, new_sha, ['a.c', 'foobar']))
+        self.waitUntilSettled()
+
+        self.assertEqual(0, len(self.history))
+
     def test_label_added_event(self):
         A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
         self.fake_github.emitEvent(A.addLabel('test'))

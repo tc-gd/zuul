@@ -306,6 +306,13 @@ class GithubConnection(BaseConnection):
         log_rate_limit(self.log, self.github)
         return filenames
 
+    def getPushFileNames(self, owner, project, oldrev, newrev):
+        comparison = \
+            self.github.repository(owner, project).compare_commits(oldrev,
+                                                                   newrev)
+        filenames = [f.filename for f in comparison]
+        return filenames
+
     def getUser(self, login):
         return GithubUser(self.github, login)
 

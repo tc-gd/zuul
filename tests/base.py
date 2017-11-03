@@ -695,6 +695,7 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         self.upstream_root = upstream_root
         self.merge_failure = False
         self.merge_not_allowed_count = 0
+        self.files = {}
 
     def openFakePullRequest(self, project, branch, subject, files=[]):
         self.pr_number += 1
@@ -718,7 +719,8 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         }
         return (event_name, event_data)
 
-    def getPushEvent(self, project, branch, old_rev=None, new_rev=None):
+    def getPushEvent(self, project, branch, old_rev=None, new_rev=None,
+                     files=[]):
         if not old_rev:
             old_rev = random_sha1()
         if not new_rev:
@@ -732,6 +734,7 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
                 'full_name': project
             }
         }
+        self.files[(old_rev, new_rev)] = files
         return (name, data)
 
     def getPingEvent(self):
@@ -772,6 +775,12 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
     def getPullFileNames(self, owner, project, number):
         pr = self.pull_requests[number - 1]
         return pr.files
+
+    def getPushFileNames(self, owner, project, oldrev, newrev):
+        if (oldrev, newrev) in self.files:
+            return self.files[(oldrev, newrev)]
+        else:
+            return None
 
     def getUser(self, login):
         data = {
