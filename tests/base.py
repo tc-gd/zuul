@@ -535,6 +535,17 @@ class FakeGithubPullRequest(object):
     def getPullRequestClosedEvent(self):
         return self._getPullRequestEvent('closed')
 
+    def getPullRequestBaseChangedEvent(self):
+        name, data = self._getPullRequestEvent('edited')
+        data['changes'] = {
+            'base': {
+                'ref': {
+                    'from': 'orig-base'
+                }
+            }
+        }
+        return (name, data)
+
     def addComment(self, message):
         self.comments.append(message)
         self._updateTimeStamp()

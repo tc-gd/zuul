@@ -542,3 +542,12 @@ class TestGithub(ZuulTestCase):
         self.waitUntilSettled()
 
         self.assertIn('abcd', A.statuses)
+
+    def test_base_changed_event(self):
+        "Tests that Zuul responds to base change in Github PR"
+        A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
+        self.fake_github.emitEvent(A.getPullRequestBaseChangedEvent())
+        self.waitUntilSettled()
+
+        self.assertEqual(len(self.history), 3)
+        self.assertEqual(A.statuses['check']['state'], 'success')

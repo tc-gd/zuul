@@ -111,6 +111,8 @@ class GithubWebhookListener():
             event.type = 'pr-open'
         elif action == 'synchronize':
             event.type = 'pr-change'
+        elif action == 'edited' and self._is_base_changed(body):
+            event.type = 'pr-change'
         elif action == 'closed':
             event.type = 'pr-close'
         elif action == 'reopened':
@@ -206,6 +208,9 @@ class GithubWebhookListener():
         login = body.get('sender').get('login')
         if login:
             return self.connection.getUser(login)
+
+    def _is_base_changed(self, body):
+        return ('changes' in body and 'base' in body['changes'])
 
 
 class GithubUser(collections.Mapping):
