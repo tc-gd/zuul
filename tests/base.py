@@ -701,7 +701,7 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         super(FakeGithubConnection, self).__init__(connection_name,
                                                    connection_config)
         self.connection_name = connection_name
-        self.pr_number = 0
+        self.pr_number = {}
         self.pull_requests = []
         self.upstream_root = upstream_root
         self.merge_failure = False
@@ -709,10 +709,10 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         self.files = {}
 
     def openFakePullRequest(self, project, branch, subject, files=[]):
-        self.pr_number += 1
+        self.pr_number[project] = self.pr_number.setdefault(project, 0) + 1
         pull_request = FakeGithubPullRequest(
-            self, self.pr_number, project, branch, subject, self.upstream_root,
-            files=files)
+            self, self.pr_number[project], project, branch,
+            subject, self.upstream_root, files=files)
         self.pull_requests.append(pull_request)
         return pull_request
 

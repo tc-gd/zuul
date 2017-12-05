@@ -551,3 +551,26 @@ class TestGithub(ZuulTestCase):
 
         self.assertEqual(len(self.history), 3)
         self.assertEqual(A.statuses['check']['state'], 'success')
+
+    def test_multiple_projects(self):
+        "Test that Zuul does not delete old versions of PRs of other projects"
+        self.worker.hold_jobs_in_build = True
+
+        A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
+        self.fake_github.emitEvent(A.getPullRequestOpenedEvent())
+        B = self.fake_github.openFakePullRequest('org/one-job-project',
+                                                 'master', 'B')
+        self.fake_github.emitEvent(B.getPullRequestOpenedEvent())
+
+        self.waitUntilSettled()
+
+        self.assertEqual(len(self.builds), 2)
+        self.assertEqual(self.builds[0].name, 'project-merge')
+        self.assertEqual(self.builds[1].name, 'one-job-project-merge')
+        self.worker.hold_jobs_in_build = False
+        self.worker.release()
+
+        self.waitUntilSettled()
+        self.assertEqual(len(self.history), 4)
+        self.assertEqual(A.statuses['check']['state'], 'success')
+        self.assertEqual(B.statuses['check']['state'], 'success')

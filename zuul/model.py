@@ -990,10 +990,11 @@ class PullRequest(Change):
         self.title = None
 
     def isUpdateOf(self, other):
-        if (hasattr(other, 'number') and self.number == other.number and
+        if (hasattr(other, 'project') and self.project == other.project and
+            hasattr(other, 'number') and self.number == other.number and
             hasattr(other, 'patchset') and self.patchset != other.patchset and
             hasattr(other, 'updated_at') and
-            self.updated_at > other.updated_at):
+            self.updated_at >= other.updated_at):
             return True
         return False
 
