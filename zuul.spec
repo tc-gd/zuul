@@ -27,7 +27,7 @@ BuildRequires:    python-virtualenv
 %setup -q -c
 
 %build
-export PBR_VERSION="%{version}-%{release}"
+export PBR_VERSION="%{version}.%{release}"
 make build
 
 %install
