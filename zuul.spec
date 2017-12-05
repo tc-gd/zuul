@@ -34,6 +34,10 @@ make build
 rm -fr $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT%{install_dir} install
 
+%check
+export PBR_VERSION="%{version}.%{release}"
+make check
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
