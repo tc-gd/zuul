@@ -12,7 +12,9 @@ tarball:
 
 # Build zuul bundle
 .PHONY: build
-build:
+build: build.state
+
+build.state:
 	$(VIRTUALENV) $(VENV_DIR)
 	$(VENV_ACTIVATE) && pip install -U pip
 	$(VENV_ACTIVATE) && pip install -r requirements.txt
@@ -20,6 +22,7 @@ build:
 	$(VENV_ACTIVATE) && python setup.py install
 	rm -f $(VENV_DIR)/pip-selfcheck.json
 	$(VIRTUALENV) --relocatable $(VENV_DIR)
+	touch $@
 
 # Install zuul bundle into DESTDIR
 .PHONY: install
@@ -37,3 +40,10 @@ test-logging:
 	rm -f integration/.test/log/*
 	tox -e venv -- timeout --preserve-status 10 zuul-server -c integration/config/zuul.conf -d
 	grep -F 'zuul.GithubConnection' integration/.test/log/zuul.log
+
+.PHONY: check
+check: build.state
+	$(VENV_ACTIVATE) && \
+		pip install --requirement test-requirements.txt
+	$(VENV_ACTIVATE) && \
+        OS_TEST_TIMEOUT=60 python setup.py testr --slowest
