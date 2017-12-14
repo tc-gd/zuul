@@ -315,7 +315,7 @@ class GithubConnection(BaseConnection):
         comparison = \
             self.github.repository(owner, project).compare_commits(oldrev,
                                                                    newrev)
-        filenames = [f.filename for f in comparison]
+        filenames = [f['filename'] for f in comparison.files]
         return filenames
 
     def getUser(self, login):
