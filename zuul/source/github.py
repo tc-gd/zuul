@@ -58,7 +58,7 @@ class GithubSource(BaseSource):
             change.url = event.change_url
             change.updated_at = self._ghTimestampToDate(event.updated_at)
             change.patchset = event.patch_number
-            change.files = self.getPullFiles(project, change.number)
+            change.files = event.files
             change.title = event.title
             change.source_event = event
         else:
@@ -67,8 +67,7 @@ class GithubSource(BaseSource):
             change.oldrev = event.oldrev
             change.newrev = event.newrev
             change.url = self.getGitwebUrl(project, sha=event.newrev)
-            change.files = self.getPushFiles(project,
-                                             event.oldrev, event.newrev)
+            change.files = event.files
             change.source_event = event
         return change
 
@@ -87,16 +86,6 @@ class GithubSource(BaseSource):
     def getGitwebUrl(self, project, sha=None):
         """Get the git-web url for a project."""
         return self.connection.getGitwebUrl(project, sha)
-
-    def getPullFiles(self, project, number):
-        """Get filenames of the pull request"""
-        owner, project = project.name.split('/')
-        return self.connection.getPullFileNames(owner, project, number)
-
-    def getPushFiles(self, project, oldrev, newrev):
-        """Get filenames of push event (git diff)."""
-        owner, project = project.name.split('/')
-        return self.connection.getPushFileNames(owner, project, oldrev, newrev)
 
     def _ghTimestampToDate(self, timestamp):
         return time.strptime(timestamp, '%Y-%m-%dT%H:%M:%SZ')

@@ -64,17 +64,11 @@ class TestGithub(ZuulTestCase):
         ))
         self.assertEqual(1, len(A.comments))
 
-        self.assertEqual(14, self.fake_github.api_calls)
+        self.assertEqual(8, self.fake_github.api_calls)
         self.assertEqual([
+            (1, 'getPullFileNames'),
             (1, 'getUser'),
-            (1, 'getPullFileNames'),
             (2, 'setCommitStatus'),
-            (1, 'getPullFileNames'),
-            (1, 'getPullFileNames'),
-            (1, 'getPullFileNames'),
-            (1, 'getPullFileNames'),
-            (1, 'getPullFileNames'),
-            (1, 'getPullFileNames'),
             (2, 'commentPull'),
             (2, 'setCommitStatus')
         ], self.fake_github.api_calls_list)

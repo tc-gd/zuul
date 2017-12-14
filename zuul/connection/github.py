@@ -97,6 +97,11 @@ class GithubWebhookListener():
         # necessary for the scheduler to match against particular branches
         event.branch = ref_parts[2]
 
+        owner, project = event.project_name.split('/')
+        event.files = self.connection.getPushFileNames(
+            owner, project, event.oldrev, event.newrev
+        )
+
         return event
 
     def _event_pull_request(self, request):
@@ -201,6 +206,11 @@ class GithubWebhookListener():
         event.patch_number = head.get('sha')
 
         event.title = pr_body.get('title')
+
+        owner, project = event.project_name.split('/')
+        event.files = self.connection.getPullFileNames(
+            owner, project, event.change_number
+        )
 
         return event
 

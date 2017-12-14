@@ -1113,6 +1113,7 @@ class GithubTriggerEvent(TriggerEvent):
     def __init__(self):
         super(GithubTriggerEvent, self).__init__()
         self.title = None
+        self.files = []
 
     def isPatchsetCreated(self):
         return self.type in ['pr-open', 'pr-change']
