@@ -701,12 +701,18 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         super(FakeGithubConnection, self).__init__(connection_name,
                                                    connection_config)
         self.connection_name = connection_name
+        self.api_calls = 0
+        self.api_calls_list = []
         self.pr_number = {}
         self.pull_requests = []
         self.upstream_root = upstream_root
         self.merge_failure = False
         self.merge_not_allowed_count = 0
         self.files = {}
+
+    def api_called(self, count, method):
+        self.api_calls += count
+        self.api_calls_list.append((count, method))
 
     def openFakePullRequest(self, project, branch, subject, files=[]):
         self.pr_number[project] = self.pr_number.setdefault(project, 0) + 1
@@ -766,6 +772,7 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         return urllib.request.urlopen(req)
 
     def getPull(self, owner, project, number):
+        self.api_called(1, 'getPull')
         pr = self.pull_requests[number - 1]
         data = {
             'number': number,
@@ -784,16 +791,19 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         return data
 
     def getPullFileNames(self, owner, project, number):
+        self.api_called(1, 'getPullFileNames')
         pr = self.pull_requests[number - 1]
         return pr.files
 
     def getPushFileNames(self, owner, project, oldrev, newrev):
+        self.api_called(2, 'getPushFileNames')
         if (oldrev, newrev) in self.files:
             return self.files[(oldrev, newrev)]
         else:
             return None
 
     def getUser(self, login):
+        self.api_called(1, 'getUser')
         data = {
             'username': login,
             'name': 'Github User',
@@ -808,11 +818,13 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
         return super(FakeGithubConnection, self).getGitUrl(project)
 
     def commentPull(self, owner, project, pr_number, message):
+        self.api_called(2, 'commentPull')
         pull_request = self.pull_requests[pr_number - 1]
         pull_request.addComment(message)
 
     def mergePull(self, owner, project, pr_number, commit_message='',
                   sha=None):
+        self.api_called(2, 'mergePull')
         pull_request = self.pull_requests[pr_number - 1]
         if self.merge_failure:
             raise Exception('Pull request was not merged')
@@ -825,6 +837,7 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
 
     def setCommitStatus(self, owner, project, sha, state,
                         url='', description='', context=''):
+        self.api_called(2, 'setCommitStatus')
         for pr in self.pull_requests:
             pr_owner, pr_project = pr.project.split('/')
             if (pr_owner == owner and pr_project == project and
@@ -832,10 +845,12 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
                 pr.setStatus(state, url, description, context)
 
     def labelPull(self, owner, project, pr_number, label):
+        self.api_called(2, 'labelPull')
         pull_request = self.pull_requests[pr_number - 1]
         pull_request.addLabel(label)
 
     def unlabelPull(self, owner, project, pr_number, label):
+        self.api_called(2, 'unlabelPull')
         pull_request = self.pull_requests[pr_number - 1]
         pull_request.removeLabel(label)
 
