@@ -150,3 +150,25 @@ class TestTimeDataBase(BaseTestCase):
         for x in range(10):
             self.db.update('job-name', 100, 'SUCCESS')
         self.assertEqual(self.db.getEstimatedTime('job-name'), 100)
+
+
+class TestChangeish(BaseTestCase):
+    """Tests Changeish and its child classes"""
+
+    def test_inequality(self):
+        """Test that checking for equality of diffferent
+        classes does not throw exceptions"""
+        change = model.Change("project1")
+        change.number = 4
+        change.patchset = 10
+        ref = model.Ref("project1")
+        ref.ref = 'origin/master'
+        ref.newrev = 1234
+        nullchange = model.NullChange("project1")
+
+        self.assertFalse(change.equals(ref))
+        self.assertFalse(change.equals(nullchange))
+        self.assertFalse(ref.equals(change))
+        self.assertFalse(ref.equals(nullchange))
+        self.assertFalse(nullchange.equals(change))
+        self.assertFalse(nullchange.equals(ref))
