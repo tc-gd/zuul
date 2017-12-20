@@ -960,7 +960,10 @@ class Change(Changeish):
         return '<Change 0x%x %s>' % (id(self), self._id())
 
     def equals(self, other):
-        if self.number == other.number and self.patchset == other.patchset:
+        if (all([hasattr(other, attr) for attr in ['number', 'patchset']])
+            and self.project == other.project
+            and self.number == other.number
+            and self.patchset == other.patchset):
             return True
         return False
 
@@ -1025,7 +1028,8 @@ class Ref(Changeish):
         return rep
 
     def equals(self, other):
-        if (self.project == other.project
+        if (all([hasattr(other, attr) for attr in ['ref', 'newref']])
+            and self.project == other.project
             and self.ref == other.ref
             and self.newrev == other.newrev):
             return True
