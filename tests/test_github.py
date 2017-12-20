@@ -270,7 +270,7 @@ class TestGithub(ZuulTestCase):
                      (A.number, A.head_sha))
         self.assertEqual('Standard check', check_status['description'])
         self.assertEqual('success', check_status['state'])
-        self.assertEqual(check_url, check_status['url'])
+        self.assertEqual('', check_status['url'])
 
         # pipeline does not report any status
         self.worker.hold_jobs_in_build = True
