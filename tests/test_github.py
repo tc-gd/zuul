@@ -64,6 +64,15 @@ class TestGithub(ZuulTestCase):
         ))
         self.assertEqual(1, len(A.comments))
 
+        self.assertEqual(8, self.fake_github.api_calls)
+        self.assertEqual([
+            (1, 'getPullFileNames'),
+            (1, 'getUser'),
+            (2, 'setCommitStatus'),
+            (2, 'commentPull'),
+            (2, 'setCommitStatus')
+        ], self.fake_github.api_calls_list)
+
     def test_pull_unmatched_branch_event(self):
         self.create_branch('org/project', 'unmatched_branch')
         A = self.fake_github.openFakePullRequest(
