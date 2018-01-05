@@ -924,6 +924,9 @@ class Changeish(object):
     def isUpdateOf(self, other):
         raise NotImplementedError()
 
+    def isVersionOf(self, other):
+        raise NotImplementedError()
+
     def filterJobs(self, jobs):
         return filter(lambda job: job.changeMatches(self), jobs)
 
@@ -976,6 +979,12 @@ class Change(Changeish):
             return True
         return False
 
+    def isVersionOf(self, other):
+        if ((hasattr(other, 'number') and self.number == other.number) and
+            hasattr(other, 'patchset')):  # check if other is a Gerrit change
+            return True
+        return False
+
     def getRelatedChanges(self):
         related = set()
         for c in self.needs_changes:
@@ -998,6 +1007,13 @@ class PullRequest(Change):
             hasattr(other, 'patchset') and self.patchset != other.patchset and
             hasattr(other, 'updated_at') and
             self.updated_at >= other.updated_at):
+            return True
+        return False
+
+    def isVersionOf(self, other):
+        if (hasattr(other, 'project') and self.project == other.project and
+                hasattr(other, 'number') and self.number == other.number and
+                hasattr(other, 'updated_at')):  # check if other is a PR object
             return True
         return False
 
@@ -1038,6 +1054,9 @@ class Ref(Changeish):
     def isUpdateOf(self, other):
         return False
 
+    def isVersionOf(self, other):
+        return False
+
 
 class NullChange(Changeish):
     def __repr__(self):
@@ -1053,6 +1072,9 @@ class NullChange(Changeish):
         return False
 
     def isUpdateOf(self, other):
+        return False
+
+    def isVersionOf(self, other):
         return False
 
 

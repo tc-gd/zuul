@@ -1424,7 +1424,8 @@ class BasePipelineManager(object):
         self.log.debug("Removing versions of change %s in pipeline %s" %
                        (change, self.pipeline.name))
         for item in self.pipeline.getAllItems():
-            if item.change.number == change.number:
+            # Works for both Github PRs and Gerrit
+            if (change.isVersionOf(item.change)):
                 self.removeItem(item)
 
     def reEnqueueItem(self, item, last_head):

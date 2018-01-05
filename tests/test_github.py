@@ -583,3 +583,47 @@ class TestGithub(ZuulTestCase):
         self.assertEqual(len(self.history), 4)
         self.assertEqual(A.statuses['check']['state'], 'success')
         self.assertEqual(B.statuses['check']['state'], 'success')
+
+    def test_abort_pipelines(self):
+        """Test if jobs in other pipelines related to the same change get"""
+        """aborted as configured"""
+        self.config.set('zuul', 'layout_config',
+                        'tests/fixtures/layout-abort-pipelines.yaml')
+        self.sched.reconfigure(self.config)
+        self.registerJobs()
+        self.worker.hold_jobs_in_build = True
+        check_pipeline = self.sched.layout.pipelines['check']
+        gate_pipeline = self.sched.layout.pipelines['gate']
+
+        A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
+        # Also check that abort-pipelines does not cancel items
+        # from other projects.
+        B = self.fake_github.openFakePullRequest('org/project1', 'master', 'B')
+        self.fake_github.emitEvent(A.getPullRequestOpenedEvent())
+        self.fake_github.emitEvent(B.getPullRequestOpenedEvent())
+        self.waitUntilSettled()
+        self.assertEqual(len(check_pipeline.getAllItems()), 2)
+        self.assertEqual(len(gate_pipeline.getAllItems()), 0)
+
+        self.fake_github.emitEvent(A.addLabel('merge'))
+        self.waitUntilSettled()
+        self.assertEqual(len(check_pipeline.getAllItems()), 1)
+        self.assertEqual(len(gate_pipeline.getAllItems()), 1)
+
+        self.worker.hold_jobs_in_build = False
+        self.worker.release()
+        self.waitUntilSettled()
+
+        self.assertEqual(len(self.history), 3)
+        self.assertEqual(self.history[0].name, 'project-check')
+        self.assertEqual(self.history[0].result, 'ABORTED')
+
+        run_job_names = ['project-check', 'project-gate', 'project1-check']
+        self.assertEqual(sorted([job.name for job in self.history]),
+                         sorted(run_job_names))
+
+        # TODO JPR - change desired status from 'pending' to something else
+        # after merging SETI-377
+        self.assertEqual(A.statuses['check']['state'], 'pending')
+        self.assertEqual(A.statuses['gate']['state'], 'success')
+        self.assertEqual(B.statuses['check']['state'], 'success')

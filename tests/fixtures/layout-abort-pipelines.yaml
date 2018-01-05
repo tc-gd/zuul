@@ -2,40 +2,55 @@
 pipelines:
   - name: check
     manager: IndependentPipelineManager
+    source: github
     trigger:
-      gerrit:
-        - event: patchset-created
+      github:
+        - event:
+            - pr-open
+    start:
+      github:
+        status: true
     success:
-      gerrit:
-        verified: 2
+      github:
+        status: true
+        comment: true
     failure:
-      gerrit:
-        verified: -2
+      github:
+        status: true
+        comment: true
+
   - name: gate
     manager: DependentPipelineManager
-    trigger:
-      gerrit:
-        - event: comment-added
-          approval:
-            - approved: 1
+    source: github
     abort-pipelines:
       - check
+    trigger:
+      github:
+        - event: pr-label
+          label: 'merge'
+    start:
+      github:
+        status: true
     success:
-      gerrit:
-        verified: 2
+      github:
+        status: true
+        merge: true
+        label: '-merge'
     failure:
-      gerrit:
-        verified: -2
+      github:
+        status: true
+        comment: true
+        label: '-merge'
 
-jobs:
-  - name: project-check1
-  - name: project-check2
-  - name: project-gate
 
 projects:
   - name: org/project
     check:
-      - project-check1:
-        - project-check2
+      - project-check
     gate:
       - project-gate
+  - name: org/project1
+    check:
+      - project1-check
+    gate:
+      - project1-gate
