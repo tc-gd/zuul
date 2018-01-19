@@ -17,7 +17,7 @@ import voluptuous as v
 import time
 
 from zuul.reporter import BaseReporter
-from zuul.exceptions import MergeFailure
+from zuul.exceptions import MergeFailure, HeadBranchModified
 
 
 class GithubReporter(BaseReporter):
@@ -48,15 +48,20 @@ class GithubReporter(BaseReporter):
 
     def report(self, source, pipeline, item, message=None):
         """Comment on PR and set commit status."""
+        if (self._merge and
+            hasattr(item.change, 'number')):
+            try:
+                self.mergePull(item)
+            except HeadBranchModified as e:
+                pipeline.manager.sendReport(pipeline.failure_actions,
+                                            source, item, e.message)
+                raise
         if self._create_comment:
             self.addPullComment(pipeline, item, message)
         if (self._set_commit_status and
             hasattr(item.change, 'patchset') and
             item.change.patchset is not None):
             self.setPullStatus(pipeline, item)
-        if (self._merge and
-            hasattr(item.change, 'number')):
-            self.mergePull(item)
         if self._labels:
             self.setLabels(item)
 
@@ -102,12 +107,20 @@ class GithubReporter(BaseReporter):
                        (item.change, self.reporter_config))
         message = self._formatMergeMessage(item.change)
         try:
-            self.connection.mergePull(owner, project, pr_number, message, sha)
-        except MergeFailure:
-            time.sleep(2)
-            self.log.debug('Trying to merge change %s again...' % item.change)
-            self.connection.mergePull(owner, project, pr_number, message, sha)
-        item.change.is_merged = True
+            try:
+                self.connection.mergePull(owner, project,
+                                          pr_number, message, sha)
+            except MergeFailure:
+                time.sleep(2)
+                self.log.debug('Trying to merge change %s again...'
+                               % item.change)
+                self.connection.mergePull(owner, project,
+                                          pr_number, message, sha)
+            item.change.is_merged = True
+        except HeadBranchModified:
+            self.log.debug('Head branch modified. Change %s not merged' %
+                           item.change)
+            raise
 
     def setLabels(self, item):
         owner, project = item.change.project.name.split('/')

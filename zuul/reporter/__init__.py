@@ -40,7 +40,7 @@ class BaseReporter(object):
         """Stop the reporter."""
 
     @abc.abstractmethod
-    def report(self, source, pipeline, item):
+    def report(self, source, pipeline, item, message=None):
         """Send the compiled report message."""
 
     def getSubmitAllowNeeds(self):

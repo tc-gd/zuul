@@ -627,3 +627,17 @@ class TestGithub(ZuulTestCase):
         self.assertEqual(A.statuses['check']['state'], 'pending')
         self.assertEqual(A.statuses['gate']['state'], 'success')
         self.assertEqual(B.statuses['check']['state'], 'success')
+
+    def test_head_branch_modified(self):
+        "Test that zuul handles Github API HeadBranchModified error correctly"
+
+        A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
+
+        self.fake_github.head_branch_modified = True
+        self.fake_github.emitEvent(A.addLabel('merge'))
+        self.waitUntilSettled()
+
+        self.assertEqual(A.statuses['gate']['state'], 'failure')
+        self.assertIn("Error merging pull request:"
+                      " Head branch was modified.", A.comments)
+        self.assertEqual(False, A.is_merged)
