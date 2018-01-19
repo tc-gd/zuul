@@ -87,6 +87,7 @@ class Pipeline(object):
         self.success_actions = []
         self.failure_actions = []
         self.merge_failure_actions = []
+        self.abort_actions = []
         self.disabled_actions = []
         self.disable_at = None
         self._consecutive_failures = 0
@@ -705,6 +706,7 @@ class QueueItem(object):
         self.reported = False
         self.active = False  # Whether an item is within an active window
         self.live = True  # Whether an item is intended to be processed at all
+        self.aborted = False
 
     def __repr__(self):
         if self.pipeline:

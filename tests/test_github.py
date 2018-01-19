@@ -586,7 +586,7 @@ class TestGithub(ZuulTestCase):
 
     def test_abort_pipelines(self):
         """Test if jobs in other pipelines related to the same change get"""
-        """aborted as configured"""
+        """aborted as configured. Also test abort reporter."""
         self.config.set('zuul', 'layout_config',
                         'tests/fixtures/layout-abort-pipelines.yaml')
         self.sched.reconfigure(self.config)
@@ -622,11 +622,11 @@ class TestGithub(ZuulTestCase):
         self.assertEqual(sorted([job.name for job in self.history]),
                          sorted(run_job_names))
 
-        # TODO JPR - change desired status from 'pending' to something else
-        # after merging SETI-377
-        self.assertEqual(A.statuses['check']['state'], 'pending')
+        self.assertEqual(A.statuses['check']['state'], 'failure')
         self.assertEqual(A.statuses['gate']['state'], 'success')
         self.assertEqual(B.statuses['check']['state'], 'success')
+
+        self.assertIn("Build in pipeline check aborted.", A.comments)
 
     def test_head_branch_modified(self):
         "Test that zuul handles Github API HeadBranchModified error correctly"

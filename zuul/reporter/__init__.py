@@ -60,7 +60,8 @@ class BaseReporter(object):
             'success': self._formatItemReportSuccess,
             'failure': self._formatItemReportFailure,
             'merge-failure': self._formatItemReportMergeFailure,
-            'disabled': self._formatItemReportDisabled
+            'disabled': self._formatItemReportDisabled,
+            'abort': self._formatItemReportAborted,
         }
         return format_methods[self._action]
 
@@ -104,6 +105,9 @@ class BaseReporter(object):
             return self._formatItemReportFailure(pipeline, item)
         else:
             return self._formatItemReport(pipeline, item)
+
+    def _formatItemReportAborted(self, pipeline, item):
+        return "Build in pipeline %s aborted." % pipeline.name
 
     def _formatItemReportJobs(self, pipeline, item):
         # Return the list of jobs portion of the report

@@ -42,7 +42,8 @@ class GithubReporter(BaseReporter):
             'start': 'pending',
             'success': 'success',
             'failure': 'failure',
-            'merge-failure': 'failure'
+            'merge-failure': 'failure',
+            'abort': 'failure',
         }
         self._github_status_value = github_status_values[self._action]
 
