@@ -10,6 +10,10 @@ pipelines:
     start:
       github:
         status: true
+    abort:
+      github:
+        status: true
+        comment: true
     success:
       github:
         status: true

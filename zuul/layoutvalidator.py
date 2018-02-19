@@ -270,7 +270,7 @@ class LayoutSchema(object):
         self.pipeline['trigger'] = v.Required(
             self.getDriverSchema('trigger', connections))
         for action in ['start', 'success', 'failure', 'merge-failure',
-                       'disabled']:
+                       'disabled', 'abort']:
             self.pipeline[action] = self.getDriverSchema('reporter',
                                                          connections)
 
@@ -346,7 +346,8 @@ class LayoutValidator(object):
         for pipeline in data['pipelines']:
             self.extraDriverValidation('trigger', pipeline['trigger'],
                                        connections)
-            for action in ['start', 'success', 'failure', 'merge-failure']:
+            for action in ['start', 'success', 'failure',
+                           'merge-failure', 'abort']:
                 if action in pipeline:
                     self.extraDriverValidation('reporter', pipeline[action],
                                                connections)

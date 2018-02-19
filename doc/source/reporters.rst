@@ -7,8 +7,8 @@ Zuul can communicate results and progress back to configurable
 protocols. For example, after succeeding in a build a pipeline can be
 configured to post a positive review back to Gerrit.
 
-There are three stages when a report can be handled. That is on:
-Start, Success or Failure. Each stage can have multiple reports.
+There are four stages when a report can be handled. That is on:
+Start, Abort, Success or Failure. Each stage can have multiple reports.
 For example, you can set verified on Gerrit and send an email.
 
 Gerrit

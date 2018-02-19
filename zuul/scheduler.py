@@ -277,6 +277,7 @@ class Scheduler(threading.Thread):
             'failure': 'failure_actions',
             'merge-failure': 'merge_failure_actions',
             'disabled': 'disabled_actions',
+            'abort': 'abort_actions',
         }
 
     def stop(self):
@@ -1291,6 +1292,8 @@ class BasePipelineManager(object):
         self.log.info("    %s" % self.pipeline.merge_failure_actions)
         self.log.info("  When disabled:")
         self.log.info("    %s" % self.pipeline.disabled_actions)
+        self.log.info("  On abort:")
+        self.log.info("    %s" % self.pipeline.abort_actions)
 
     def getSubmitAllowNeeds(self):
         # Get a list of code review labels that are allowed to be
@@ -1354,7 +1357,7 @@ class BasePipelineManager(object):
         report_errors = []
         if len(action_reporters) > 0:
             for reporter in action_reporters:
-                ret = reporter.report(source, self.pipeline, item)
+                ret = reporter.report(source, self.pipeline, item, message)
                 if ret:
                     report_errors.append(ret)
             if len(report_errors) == 0:
@@ -1410,6 +1413,8 @@ class BasePipelineManager(object):
         if old_item:
             self.log.debug("Change %s is a new version of %s, removing %s" %
                            (change, old_item.change, old_item))
+            old_item.aborted = True
+            self._reportItem(old_item)
             self.removeItem(old_item)
 
     def removeAbandonedChange(self, change):
@@ -1424,8 +1429,9 @@ class BasePipelineManager(object):
         self.log.debug("Removing versions of change %s in pipeline %s" %
                        (change, self.pipeline.name))
         for item in self.pipeline.getAllItems():
-            # Works for both Github PRs and Gerrit
-            if (change.isVersionOf(item.change)):
+            if change.isVersionOf(item.change):
+                item.aborted = True
+                self._reportItem(item)
                 self.removeItem(item)
 
     def reEnqueueItem(self, item, last_head):
@@ -1805,7 +1811,11 @@ class BasePipelineManager(object):
     def _reportItem(self, item):
         self.log.debug("Reporting change %s" % item.change)
         ret = True  # Means error as returned by trigger.report
-        if not self.pipeline.getJobs(item) and \
+        if item.aborted:
+            self.log.debug("aborted %s" % self.pipeline.abort_actions)
+            actions = self.pipeline.abort_actions
+            item.setReportedResult('ABORTED')
+        elif not self.pipeline.getJobs(item) and \
             not self.pipeline.report_empty:
             # We don't send empty reports with +1,
             # and the same for -1's (merge failures or transient errors)
