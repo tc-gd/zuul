@@ -35,9 +35,7 @@ class GitRepo
     parse_change_number(output)
   end
 
-  def create_test_branch(target_branch)
-    rand_string = rand(36**6).to_s(36)
-    test_branch = "test_#{rand_string}"
+  def create_test_branch(test_branch, target_branch)
     @git.branch(test_branch).checkout
     @git.reset_hard("origin/#{target_branch}")
     test_branch
