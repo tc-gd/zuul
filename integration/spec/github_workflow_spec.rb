@@ -26,6 +26,11 @@ describe 'Github pull request' do
   before(:all) do
     @config = EnvConfig.new %w(GITHUB_API_TOKEN GITHUB_USER GITHUB_REPO
                                GITHUB_TARGET_BRANCH JENKINS_SERVER)
+    @github = Octokit::Client.new(access_token: @config.api_token)
+  end
+
+  before do
+    @test_branch_name = "test_"+rand(36**6).to_s(36)
   end
 
   it 'runs check and gate pipelines' do
@@ -33,36 +38,44 @@ describe 'Github pull request' do
 
     puts "Cloning the repository #{repo_fqn}"
     git_repo = GitRepo.new('github.com', '22', 'git', repo_fqn)
-    test_branch = git_repo.create_test_branch(@config.target_branch)
+    test_branch = git_repo.create_test_branch(@test_branch_name, @config.target_branch)
     filename = "test#{@config.server}.txt"
     git_repo.create_test_commit(filename)
 
     # push and create a pull request
     puts 'Creating pull request'
     git_repo.git.push('origin', test_branch, force: true)
-    github = Octokit::Client.new(access_token: @config.api_token)
-    pull = github.create_pull_request(repo_fqn, @config.target_branch,
+
+    pull = @github.create_pull_request(repo_fqn, @config.target_branch,
                                       test_branch, 'Testing PR')
     puts "Created pull request #{pull.html_url}"
 
     # poll on the pull request commit status named 'check'
     puts 'Waiting for check status'
-    check_status = wait_successful_pr_status(github, repo_fqn, pull, 'check')
+    check_status = wait_successful_pr_status(@github, repo_fqn, pull, 'check')
     expect(check_status).to eq('success')
 
     # Add a 'merge' label to the pull request
     puts 'Adding a merge label'
-    github.add_labels_to_an_issue(repo_fqn, pull.number, ['merge'])
+    @github.add_labels_to_an_issue(repo_fqn, pull.number, ['merge'])
 
     # poll on the pull request commit status named 'gate'
     puts 'Waiting for gate status'
-    gate_status = wait_successful_pr_status(github, repo_fqn, pull, 'gate')
+    gate_status = wait_successful_pr_status(@github, repo_fqn, pull, 'gate')
     expect(gate_status).to eq('success')
 
     # # verify the PR is merged
     puts 'Checking the PR merged state'
-    pr_merged = wait_pr_merged(github, repo_fqn, pull)
+    pr_merged = wait_pr_merged(@github, repo_fqn, pull)
     expect(pr_merged).to be(true)
+
+  end
+
+  after do
+    # Github repo cleanup (delete created branch)
+    puts 'Deleting generated test branch'
+    repo_fqn = "#{@config.user}/#{@config.repo}"
+    @github.delete_branch(repo_fqn, @test_branch_name)
   end
 end
 
