@@ -203,6 +203,7 @@ class GithubWebhookListener():
         event.updated_at = pr_body.get('updated_at')
         event.branch = base.get('ref')
         event.refspec = "refs/pull/" + str(pr_body.get('number')) + "/head"
+        event.refspec_sha = head.get('sha')
         event.patch_number = head.get('sha')
 
         event.title = pr_body.get('title')

@@ -109,13 +109,15 @@ class MergeClient(object):
             data = getJobData(job)
             zuul_url = data.get('zuul_url')
             merged = data.get('merged', False)
+            sha_match_ok = data.get('sha_match_ok', True)
             updated = data.get('updated', False)
             commit = data.get('commit')
             self.log.info("Merge %s complete, merged: %s, updated: %s, "
-                          "commit: %s" %
-                          (job, merged, updated, build_set.commit))
+                          "commit: %s, sha_match_ok: %s" %
+                          (job, merged, updated, build_set.commit,
+                           sha_match_ok))
             self.sched.onMergeCompleted(build_set, zuul_url,
-                                        merged, updated, commit)
+                                        merged, updated, commit, sha_match_ok)
             # The test suite expects the build_set to be removed from
             # the internal dict after the wake flag is set.
             del self.build_sets[job.unique]

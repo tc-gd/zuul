@@ -218,12 +218,14 @@ class MergeCompletedEvent(ResultEvent):
     :arg str commit: The SHA of the merged commit (changes with refs).
     """
 
-    def __init__(self, build_set, zuul_url, merged, updated, commit):
+    def __init__(self, build_set, zuul_url, merged, updated, commit,
+                 sha_match_ok=True):
         self.build_set = build_set
         self.zuul_url = zuul_url
         self.merged = merged
         self.updated = updated
         self.commit = commit
+        self.sha_match_ok = sha_match_ok
 
 
 def toList(item):
@@ -751,11 +753,12 @@ class Scheduler(threading.Thread):
         self.wake_event.set()
         self.log.debug("Done adding complete event for build: %s" % build)
 
-    def onMergeCompleted(self, build_set, zuul_url, merged, updated, commit):
+    def onMergeCompleted(self, build_set, zuul_url, merged, updated, commit,
+                         sha_match_ok=True):
         self.log.debug("Adding merge complete event for build set: %s" %
                        build_set)
         event = MergeCompletedEvent(build_set, zuul_url,
-                                    merged, updated, commit)
+                                    merged, updated, commit, sha_match_ok)
         self.result_event_queue.put(event)
         self.wake_event.set()
 
@@ -1551,6 +1554,7 @@ class BasePipelineManager(object):
                     connection_name=connection_name,
                     merge_mode=item.change.project.merge_mode,
                     refspec=item.change.refspec,
+                    refspec_sha=item.change.refspec_sha,
                     branch=item.change.branch,
                     ref=item.current_build_set.ref,
                     number=number,
@@ -1778,6 +1782,10 @@ class BasePipelineManager(object):
         if not build_set.commit and not isinstance(item.change, NullChange):
             self.log.info("Unable to merge change %s" % item.change)
             self.pipeline.setUnableToMerge(item)
+            if not event.sha_match_ok:
+                self.log.error("Head commit SHA mismatch when merging %s"
+                               % item.change)
+                build_set.sha_match_ok = False
 
     def reportItem(self, item):
         if not item.reported:
@@ -1811,6 +1819,7 @@ class BasePipelineManager(object):
     def _reportItem(self, item):
         self.log.debug("Reporting change %s" % item.change)
         ret = True  # Means error as returned by trigger.report
+        custom_msg = None
         if item.aborted:
             self.log.debug("aborted %s" % self.pipeline.abort_actions)
             actions = self.pipeline.abort_actions
@@ -1830,6 +1839,10 @@ class BasePipelineManager(object):
         elif not self.pipeline.didMergerSucceed(item):
             actions = self.pipeline.merge_failure_actions
             item.setReportedResult('MERGER_FAILURE')
+            if not self.pipeline.didSHAMatch(item):
+                custom_msg = "Github ref error: SHA of pull request head " \
+                             "checked out from remote PR head ref is different" \
+                             " from head commit SHA from Github webhook event."
         else:
             actions = self.pipeline.failure_actions
             item.setReportedResult('FAILURE')
@@ -1846,7 +1859,8 @@ class BasePipelineManager(object):
             try:
                 self.log.info("Reporting item %s, actions: %s" %
                               (item, actions))
-                ret = self.sendReport(actions, self.pipeline.source, item)
+                ret = self.sendReport(actions, self.pipeline.source,
+                                      item, custom_msg)
                 if ret:
                     self.log.error("Reporting item %s received: %s" %
                                    (item, ret))

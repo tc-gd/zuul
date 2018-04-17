@@ -641,3 +641,26 @@ class TestGithub(ZuulTestCase):
         self.assertIn("Error merging pull request:"
                       " Head branch was modified.", A.comments)
         self.assertEqual(False, A.is_merged)
+
+    def test_head_commit_sha_mismatch(self):
+        """
+        Test that zuul fails when trying to merge different head commit
+        than that in webhook JSON
+        """
+
+        A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
+        old_sha = A.head_sha
+        A.addCommit()
+
+        A.head_sha = old_sha
+        event = A.getPullRequestOpenedEvent()
+
+        self.fake_github.emitEvent(event)
+        self.waitUntilSettled()
+
+        self.assertEqual(A.statuses['check']['state'], 'failure')
+
+        sha_mismatch_msg = "Github ref error: SHA of pull request head " \
+                           "checked out from remote PR head ref is different" \
+                           " from head commit SHA from Github webhook event."
+        self.assertIn(sha_mismatch_msg, A.comments)

@@ -210,6 +210,9 @@ class Pipeline(object):
             return False
         return True
 
+    def didSHAMatch(self, item):
+        return item.current_build_set.sha_match_ok
+
     def didAnyJobFail(self, item):
         for job in self.getJobs(item):
             if not job.voting:
@@ -647,6 +650,7 @@ class BuildSet(object):
         self.commit = None
         self.zuul_url = None
         self.unable_to_merge = False
+        self.sha_match_ok = True
         self.failing_reasons = []
         self.merge_state = self.NEW
 
@@ -944,6 +948,7 @@ class Change(Changeish):
         self.url = None
         self.patchset = None
         self.refspec = None
+        self.refspec_sha = None
 
         self.needs_changes = []
         self.needed_by_changes = []
@@ -1095,6 +1100,7 @@ class TriggerEvent(object):
         self.change_url = None
         self.patch_number = None
         self.refspec = None
+        self.refspec_sha = None
         self.approvals = []
         self.branch = None
         self.comment = None
