@@ -54,6 +54,7 @@ class GithubSource(BaseSource):
             change = PullRequest(project)
             change.number = event.change_number
             change.refspec = event.refspec
+            change.refspec_sha = event.refspec_sha
             change.branch = event.branch
             change.url = event.change_url
             change.updated_at = self._ghTimestampToDate(event.updated_at)

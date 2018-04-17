@@ -1551,6 +1551,7 @@ class BasePipelineManager(object):
                     connection_name=connection_name,
                     merge_mode=item.change.project.merge_mode,
                     refspec=item.change.refspec,
+                    refspec_sha=item.change.refspec_sha,
                     branch=item.change.branch,
                     ref=item.current_build_set.ref,
                     number=number,

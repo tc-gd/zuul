@@ -20,6 +20,7 @@ import traceback
 import gear
 
 from zuul.merger import merger
+from zuul.exceptions import ExpectedSHAMismatch
 
 
 class MergeServer(object):
@@ -101,7 +102,10 @@ class MergeServer(object):
 
     def merge(self, job):
         args = json.loads(job.arguments)
-        commit = self.merger.mergeChanges(args['items'])
+        try:
+            commit = self.merger.mergeChanges(args['items'])
+        except ExpectedSHAMismatch:
+            commit = None
         result = dict(merged=(commit is not None),
                       commit=commit,
                       zuul_url=self.zuul_url)

@@ -944,6 +944,7 @@ class Change(Changeish):
         self.url = None
         self.patchset = None
         self.refspec = None
+        self.refspec_sha = None
 
         self.needs_changes = []
         self.needed_by_changes = []
@@ -1095,6 +1096,7 @@ class TriggerEvent(object):
         self.change_url = None
         self.patch_number = None
         self.refspec = None
+        self.refspec_sha = None
         self.approvals = []
         self.branch = None
         self.comment = None

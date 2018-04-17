@@ -37,3 +37,11 @@ class MergeFailure(Exception):
 
 class HeadBranchModified(Exception):
     pass
+
+
+class ExpectedSHAMismatch(Exception):
+    def __init__(self, expected_sha="", actual_sha=""):
+        self.message = "Merger did not fetch expected head " \
+                       "commit: expected %s, actual %s" % \
+                       (expected_sha, actual_sha)
+        super(ExpectedSHAMismatch, self).__init__(self.message)

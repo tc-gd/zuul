@@ -18,6 +18,7 @@ import os
 import logging
 
 import zuul.model
+from zuul.exceptions import ExpectedSHAMismatch
 
 
 def reset_repo_to_head(repo):
@@ -136,20 +137,26 @@ class Repo(object):
         reset_repo_to_head(repo)
         return repo.head.commit
 
-    def cherryPick(self, ref):
+    def cherryPick(self, ref, expected_sha=None):
         repo = self.createRepoObject()
         self.log.debug("Cherry-picking %s" % ref)
         self.fetch(ref)
+        if expected_sha and expected_sha != repo.commit('FETCH_HEAD').hexsha:
+            raise ExpectedSHAMismatch(expected_sha,
+                                      repo.commit('FETCH_HEAD').hexsha)
         repo.git.cherry_pick("FETCH_HEAD")
         return repo.head.commit
 
-    def merge(self, ref, strategy=None):
+    def merge(self, ref, strategy=None, expected_sha=None):
         repo = self.createRepoObject()
         args = []
         if strategy:
             args += ['-s', strategy]
         args.append('FETCH_HEAD')
         self.fetch(ref)
+        if expected_sha and expected_sha != repo.commit('FETCH_HEAD').hexsha:
+            raise ExpectedSHAMismatch(expected_sha,
+                                      repo.commit('FETCH_HEAD').hexsha)
         self.log.debug("Merging %s with args %s" % (ref, args))
         repo.git.merge(*args)
         return repo.head.commit
@@ -261,13 +268,19 @@ class Merger(object):
         try:
             mode = item['merge_mode']
             if mode == zuul.model.MERGER_MERGE:
-                commit = repo.merge(item['refspec'])
+                commit = repo.merge(item['refspec'],
+                                    expected_sha=item['refspec_sha'])
             elif mode == zuul.model.MERGER_MERGE_RESOLVE:
-                commit = repo.merge(item['refspec'], 'resolve')
+                commit = repo.merge(item['refspec'], 'resolve',
+                                    expected_sha=item['refspec_sha'])
             elif mode == zuul.model.MERGER_CHERRY_PICK:
-                commit = repo.cherryPick(item['refspec'])
+                commit = repo.cherryPick(item['refspec'],
+                                         item['refspec_sha'])
             else:
                 raise Exception("Unsupported merge mode: %s" % mode)
+        except ExpectedSHAMismatch as e:
+            self.log.error("Error while merging: %s" % str(e))
+            raise
         except git.GitCommandError:
             # Log git exceptions at debug level because they are
             # usually benign merge conflicts
@@ -319,7 +332,7 @@ class Merger(object):
             base = repo.getBranchHead(item['branch'])
         else:
             self.log.debug("Found base commit %s for %s" % (base, key,))
-        # Merge the change
+        # Merge the change (can raise ExpectedSHAMismatch)
         commit = self._mergeChange(item, base)
         if not commit:
             return None
