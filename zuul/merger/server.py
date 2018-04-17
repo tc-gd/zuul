@@ -104,10 +104,13 @@ class MergeServer(object):
         args = json.loads(job.arguments)
         try:
             commit = self.merger.mergeChanges(args['items'])
+            sha_match_ok = True
         except ExpectedSHAMismatch:
             commit = None
+            sha_match_ok = False
         result = dict(merged=(commit is not None),
                       commit=commit,
+                      sha_match_ok=sha_match_ok,
                       zuul_url=self.zuul_url)
         job.sendWorkComplete(json.dumps(result))
 

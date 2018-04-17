@@ -659,3 +659,8 @@ class TestGithub(ZuulTestCase):
         self.waitUntilSettled()
 
         self.assertEqual(A.statuses['check']['state'], 'failure')
+
+        sha_mismatch_msg = "Github ref error: SHA of pull request head " \
+                           "checked out from remote PR head ref is different" \
+                           " from head commit SHA from Github webhook event."
+        self.assertIn(sha_mismatch_msg, A.comments)

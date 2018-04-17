@@ -210,6 +210,9 @@ class Pipeline(object):
             return False
         return True
 
+    def didSHAMatch(self, item):
+        return item.current_build_set.sha_match_ok
+
     def didAnyJobFail(self, item):
         for job in self.getJobs(item):
             if not job.voting:
@@ -647,6 +650,7 @@ class BuildSet(object):
         self.commit = None
         self.zuul_url = None
         self.unable_to_merge = False
+        self.sha_match_ok = True
         self.failing_reasons = []
         self.merge_state = self.NEW
 
