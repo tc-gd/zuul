@@ -49,6 +49,12 @@ class GithubReporter(BaseReporter):
 
     def report(self, source, pipeline, item, message=None):
         """Comment on PR and set commit status."""
+        if (self._set_commit_status and
+            hasattr(item.change, 'patchset') and
+            item.change.patchset is not None):
+            self.setPullStatus(pipeline, item)
+        if self._labels:
+            self.setLabels(item)
         if (self._merge and
             hasattr(item.change, 'number')):
             try:
@@ -59,12 +65,6 @@ class GithubReporter(BaseReporter):
                 raise
         if self._create_comment:
             self.addPullComment(pipeline, item, message)
-        if (self._set_commit_status and
-            hasattr(item.change, 'patchset') and
-            item.change.patchset is not None):
-            self.setPullStatus(pipeline, item)
-        if self._labels:
-            self.setLabels(item)
 
     def addPullComment(self, pipeline, item, message):
         if message is None:

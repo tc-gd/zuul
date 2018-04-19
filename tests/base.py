@@ -503,6 +503,7 @@ class FakeGithubPullRequest(object):
         self.comments = []
         self.labels = []
         self.statuses = {}
+        self.required_statuses = {}
         self.updated_at = None
         self.head_sha = None
         self.is_merged = False
@@ -829,6 +830,11 @@ class FakeGithubConnection(zuul.connection.github.GithubConnection):
                   sha=None):
         self.api_called(2, 'mergePull')
         pull_request = self._getPullRequest(owner, project, pr_number)
+        for s, v in pull_request.required_statuses.items():
+            if (s not in pull_request.statuses or
+                pull_request.statuses[s]['state'] != v):
+                raise Exception('Merge is not allowed: all required status '
+                                'checks did not succeed')
         if self.merge_failure:
             raise Exception('Pull request was not merged')
         if self.merge_not_allowed_count > 0:

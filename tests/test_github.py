@@ -69,8 +69,8 @@ class TestGithub(ZuulTestCase):
             (1, 'getPullFileNames'),
             (1, 'getUser'),
             (2, 'setCommitStatus'),
+            (2, 'setCommitStatus'),
             (2, 'commentPull'),
-            (2, 'setCommitStatus')
         ], self.fake_github.api_calls_list)
 
     def test_pull_unmatched_branch_event(self):
@@ -664,3 +664,19 @@ class TestGithub(ZuulTestCase):
                            "checked out from remote PR head ref is different" \
                            " from head commit SHA from Github webhook event."
         self.assertIn(sha_mismatch_msg, A.comments)
+
+    def test_protected_branch_merge(self):
+        """
+        Test that zuul sets pipeline status before merging the PR
+        so Github allows to merge to branches protected by pipeline
+        status.
+        """
+
+        A = self.fake_github.openFakePullRequest('org/project', 'master', 'A')
+        A.required_statuses = {'gate': 'success'}
+        self.fake_github.emitEvent(A.addLabel('merge'))
+        self.waitUntilSettled()
+
+        self.assertEqual('success', A.statuses['gate']['state'])
+        self.assertEqual(True, A.is_merged)
+        self.assertEqual(len(A.labels), 0)
