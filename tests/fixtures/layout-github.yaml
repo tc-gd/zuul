@@ -145,7 +145,5 @@ projects:
   - name: org/project1
     check:
       - project-testfile
-
-  - name: org/post-file-project
     post:
       - project-testfile
