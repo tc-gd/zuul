@@ -655,3 +655,39 @@ class TestCloner(ZuulTestCase):
                          'refs/zuul/abcd/Z86a9b9068320423db7bb882627187d2b')
         self.assertEqual(fallback_zuul_ref,
                          'refs/zuul/master/Z86a9b9068320423db7bb882627187d2b')
+
+    def test_remote_head(self):
+        """Simulate the state when the zuul-cloner would be aborted after
+        Repo.reset() before checking out sensible reference."""
+
+        project = 'org/project'
+
+        # create additional branch in the upstream repo
+        upstream = git.Repo(
+            os.path.join(self.upstream_root, project)
+        )
+        extra_branch = upstream.create_head('extra_branch')
+
+        # fetch the upstream to the workspace
+        cloner = zuul.lib.cloner.Cloner(
+            git_base_url=self.upstream_root,
+            projects=[project],
+            workspace=self.workspace_root,
+            zuul_branch='master',
+            zuul_ref='refs/heads/master',
+            zuul_url=self.git_root,
+        )
+        cloner.execute()
+
+        # simulate zuul-cloner falling in the middle and keeping HEAD pointing
+        # to refs/remotes/origin/HEAD
+        repo = git.Repo(
+            os.path.join(self.workspace_root, project)
+        )
+        repo.head.reference = repo.remotes.origin.refs['HEAD']
+
+        # remove the additional upstream branch
+        upstream.delete_head(extra_branch)
+
+        # fetch once again - this triggers the Repo.prune()
+        cloner.execute()

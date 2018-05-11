@@ -99,9 +99,9 @@ class Repo(object):
         # try reset to remote HEAD (usually origin/master)
         # If it fails, pick the first reference
         try:
-            repo.head.reference = origin.refs['HEAD']
+            repo.head.reference = origin.refs['HEAD'].commit
         except IndexError:
-            repo.head.reference = origin.refs[0]
+            repo.head.reference = origin.refs[0].commit
         reset_repo_to_head(repo)
         repo.git.clean('-x', '-f', '-d')
 
