@@ -167,7 +167,7 @@ class TestGithub(ZuulTestCase):
         old_sha = random_sha1()
         new_sha = random_sha1()
         self.fake_github.emitEvent(
-            self.fake_github.getPushEvent('org/post-file-project', 'master',
+            self.fake_github.getPushEvent('org/project1', 'master',
                                           old_sha, new_sha, ['c-requires']))
         self.waitUntilSettled()
 
@@ -178,7 +178,7 @@ class TestGithub(ZuulTestCase):
         old_sha = random_sha1()
         new_sha = random_sha1()
         self.fake_github.emitEvent(
-            self.fake_github.getPushEvent('org/post-file-project', 'master',
+            self.fake_github.getPushEvent('org/project1', 'master',
                                           old_sha, new_sha, ['a.c', 'foobar']))
         self.waitUntilSettled()
 
