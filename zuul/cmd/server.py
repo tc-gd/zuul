@@ -128,11 +128,16 @@ class Server(zuul.cmd.ZuulApp):
                 host = self.config.get('gearman_server', 'listen_address')
             else:
                 host = None
+            if self.config.has_option('gearman_server', 'keepalive'):
+                keepalive = self.config.getboolean('gearman_server', 'keepalive')
+            else:
+                keepalive = False
             zuul.lib.gearserver.GearServer(4730,
                                            host=host,
                                            statsd_host=statsd_host,
                                            statsd_port=statsd_port,
-                                           statsd_prefix='zuul.geard')
+                                           statsd_prefix='zuul.geard',
+                                           keepalive=keepalive)
 
             # Keep running until the parent dies:
             pipe_read = os.fdopen(pipe_read)

@@ -75,6 +75,11 @@ than connecting to an external one.
   Path to log config file for internal Gearman server.
   ``log_config=/etc/zuul/gearman-logging.yaml``
 
+**keepalive**
+  Whether gearman should send keepalive packets in connections to its workers.
+  (default: false)
+  ``keepalive=false``
+
 webapp
 """"""
 
