@@ -143,6 +143,12 @@ class Pipeline(object):
             return []
         return item.change.filterJobs(tree.getJobs())
 
+    def getSkippedJobs(self, item):
+        tree = self.getJobTree(item.change.project)
+        if not tree:
+            return []
+        return item.change.getUnmatchedJobs(tree.getJobs())
+
     def _findJobsToRun(self, job_trees, item, mutex):
         torun = []
         if item.item_ahead:
@@ -935,6 +941,9 @@ class Changeish(object):
 
     def filterJobs(self, jobs):
         return filter(lambda job: job.changeMatches(self), jobs)
+
+    def getUnmatchedJobs(self, jobs):
+        return filter(lambda job: (not job.changeMatches(self)), jobs)
 
     def getRelatedChanges(self):
         return set()
