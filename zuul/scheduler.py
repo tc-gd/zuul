@@ -1694,7 +1694,7 @@ class BasePipelineManager(object):
             skipped_jobs = self.pipeline.getSkippedJobs(item)
             if skipped_jobs:
                 self.log.debug("Skipped following jobs due to job filters for "
-                              "change %s : %s" % (item.change, skipped_jobs))
+                               "change %s : %s" % (item.change, skipped_jobs))
             try:
                 self.reportItem(item)
             except exceptions.MergeFailure:
