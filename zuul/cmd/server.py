@@ -129,7 +129,8 @@ class Server(zuul.cmd.ZuulApp):
             else:
                 host = None
             if self.config.has_option('gearman_server', 'keepalive'):
-                keepalive = self.config.getboolean('gearman_server', 'keepalive')
+                keepalive = self.config.getboolean('gearman_server',
+                                                   'keepalive')
             else:
                 keepalive = False
             zuul.lib.gearserver.GearServer(4730,
