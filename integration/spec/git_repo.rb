@@ -24,17 +24,6 @@ class GitRepo
     @git.commit(commit_msg)
   end
 
-  def create_testing_gerrit_change(filename)
-    create_test_commit(filename)
-    output = ''
-    Dir.chdir(@git_dir) do
-      output = `git push origin HEAD:refs/for/master 2>&1`
-    end
-    raise("Creating gerrit change failed:\n" + output) \
-      if $CHILD_STATUS.exitstatus.nonzero?
-    parse_change_number(output)
-  end
-
   def create_test_branch(test_branch, target_branch)
     @git.branch(test_branch).checkout
     @git.reset_hard("origin/#{target_branch}")
