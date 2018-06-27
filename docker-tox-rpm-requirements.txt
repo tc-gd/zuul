@@ -1,0 +1,3 @@
+libffi-devel
+libjpeg-devel
+openssl-devel
