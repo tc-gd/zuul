@@ -33,6 +33,7 @@ make build
 %install
 rm -fr $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT%{install_dir} install
+cp -r tools %{buildroot}%{install_dir}/
 
 %check
 export PBR_VERSION="%{version}.%{release}"
@@ -51,8 +52,12 @@ GoodData customized Zuul gatekeeper
 %attr(0755, root, root) %{install_dir}/lib
 %attr(0755, root, root) %{install_dir}/lib64
 %attr(0755, root, root) %{install_dir}/status
+%attr(0755, root, root) %{install_dir}/tools
 
 %changelog
+* Fri Aug 31 2018 Tomas Cech <tomas.cech@gooddata.com> 2.5.1-3.gdc
+- make tools directory part of the package
+
 * Mon Aug 08 2017 Michal Vanco <michal.vanco@gooddata.com> 2.5.1-2.gdc
 - Gerrit integration test
 - Scheduler logs projects sorted by name
